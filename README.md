@@ -369,21 +369,5 @@ python experiments/scalability_test.py --nodes 1 5 10 25 50 100 --packets 10 --i
 - **Persistent Storage**: Integration with a time-series database (e.g. InfluxDB or TimescaleDB).
 - **Application-Level ACK for Critical Alerts**: Implement stop-and-wait or selective repeat retransmissions strictly for `CRITICAL` alerts while keeping standard `HEALTH` telemetry lightweight.
 
----
-
-## 14. Viva / Defense Preparation Guide
-
-### Q1: Why did you choose UDP instead of TCP for health monitoring?
-> **Answer**: TCP is connection-oriented and requires a three-way handshake (`SYN`, `SYN-ACK`, `ACK`), connection state maintenance per client, and retransmission mechanisms. For high-frequency heartbeat telemetry, maintaining thousands of persistent TCP connections imposes significant memory overhead and file descriptor exhaustion. Furthermore, TCP's head-of-line blocking is undesirable for monitoring: if packet #1 is lost, TCP stalls packet #2 waiting for retransmission, even though packet #2 has newer, more relevant health data. With UDP, heartbeats are connectionless and lightweight; if one heartbeat is dropped, the subsequent one arrives in 1 second anyway.
-
-### Q2: How is critical traffic prioritized if UDP does not support Quality of Service (QoS)?
-> **Answer**: Standard UDP operates at the transport layer without built-in packet priority or QoS guarantees. To solve this, our project implements **application-layer priority queuing**:
-> 1. The agent detects critical threshold breaches immediately and dispatches an urgent `CRITICAL` packet rather than waiting for the next periodic interval.
-> 2. The server's socket receiver places datagrams into an internal `PriorityQueue` where `CRITICAL` packets have priority index 0 and `HEALTH` packets have priority index 2.
-> 3. The server's worker threads dequeue and process `CRITICAL` alerts before processing standard heartbeats.
-
-### Q3: How does the system detect that a node has crashed?
-> **Answer**: The server's `NodeManager` maintains a `last_heartbeat` timestamp for every node. A dedicated background thread executes every 500ms and compares `current_time - last_heartbeat` against the configured timeout threshold (default 5.0 seconds). If a node exceeds this threshold, its status transitions from `ONLINE` to `OFFLINE`, and a `[FAILURE]` alert is logged.
-
 ### Q4: Why did packet loss occur at 100 concurrent nodes during scalability testing?
 > **Answer**: When 100 node threads burst packets simultaneously on the loopback interface, the packet arrival rate briefly exceeded the OS kernel socket receive buffer drain rate. Since UDP does not implement flow control or backpressure, the kernel drops incoming datagrams once the receive buffer overflows. This demonstrates why production UDP architectures increase socket buffer sizes (`SO_RCVBUF`) or scale receiver worker threads.
