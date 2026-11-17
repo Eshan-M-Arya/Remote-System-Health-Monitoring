@@ -1,0 +1,26 @@
+{
+  "server": {
+    "host": "10.0.0.1",
+    "port": 5000,
+    "buffer_size": 4096
+  },
+  "thresholds": {
+    "cpu": {
+      "warning_percent": 80.0,
+      "critical_percent": 90.0
+    },
+    "memory": {
+      "warning_percent": 80.0,
+      "critical_percent": 90.0
+    }
+  },
+  "agent": {
+    "report_interval_seconds": 1.0,
+    "default_node_id": "NODE-01"
+  },
+  "monitoring": {
+    "node_timeout_seconds": 5.0,
+    "dashboard_refresh_seconds": 1.0,
+    "recent_alerts_limit": 10
+  }
+}
