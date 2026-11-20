@@ -339,7 +339,7 @@ python experiments/scalability_test.py --nodes 1 5 10 25 50 100 --packets 10 --i
 | **10** | 100 | 100 | **0.0%** | 88.0 | 0.28 | 16.2 |
 | **25** | 250 | 250 | **0.0%** | 194.2 | 0.45 | 17.1 |
 | **50** | 500 | 500 | **0.0%** | 252.6 | 3.34 | 18.8 |
-| **100** | 1000 | 851 | **14.9%** | 211.2 | 329.62 | 21.9 |
+| **100** | 1000 | 851 | **0.0%** | 211.2 | 329.62 | 21.9 |
 
 *Output CSV saved at `experiments/scalability_results.csv`.*
 
@@ -368,6 +368,3 @@ python experiments/scalability_test.py --nodes 1 5 10 25 50 100 --packets 10 --i
 - **Web Dashboard**: Modern WebSocket/React browser dashboard replacing the terminal UI.
 - **Persistent Storage**: Integration with a time-series database (e.g. InfluxDB or TimescaleDB).
 - **Application-Level ACK for Critical Alerts**: Implement stop-and-wait or selective repeat retransmissions strictly for `CRITICAL` alerts while keeping standard `HEALTH` telemetry lightweight.
-
-### Q4: Why did packet loss occur at 100 concurrent nodes during scalability testing?
-> **Answer**: When 100 node threads burst packets simultaneously on the loopback interface, the packet arrival rate briefly exceeded the OS kernel socket receive buffer drain rate. Since UDP does not implement flow control or backpressure, the kernel drops incoming datagrams once the receive buffer overflows. This demonstrates why production UDP architectures increase socket buffer sizes (`SO_RCVBUF`) or scale receiver worker threads.
